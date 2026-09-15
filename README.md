@@ -22,3 +22,5 @@ From Hoenn, Sinnoh, or Johto, refresh generated host hardware documentation:
 ```sh
 nix run github:alyraffauf/infra#generate-host-readmes
 ```
+
+See [AGENTS.md](AGENTS.md) for validation, state handling, and secret maintenance.
