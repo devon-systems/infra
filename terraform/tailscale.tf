@@ -32,6 +32,10 @@ resource "tailscale_acl" "tailnet" {
           "attr":   ["mullvad"],
           "target": ["100.90.233.55"],
         },
+        {
+          "attr":   ["mullvad"],
+          "target": ["100.101.20.12"],
+        },
       ],
 
       "ssh": [
@@ -45,6 +49,8 @@ resource "tailscale_acl" "tailnet" {
 
       "tagOwners": {
         "tag:k8s":            ["autogroup:admin"],
+        "tag:hoenn-operator": ["autogroup:admin"],
+        "tag:hoenn-service":  ["tag:hoenn-operator"],
         "tag:hermes":         ["autogroup:admin"],
         "tag:safari-ingress": ["autogroup:admin"],
         "tag:safari-service": ["autogroup:admin"],
@@ -53,6 +59,7 @@ resource "tailscale_acl" "tailnet" {
       "autoApprovers": {
         "services": {
           "tag:k8s": ["tag:k8s"],
+          "tag:hoenn-service": ["tag:hoenn-service"],
         },
       },
     }
