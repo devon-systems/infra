@@ -22,3 +22,16 @@ From Hoenn, Sinnoh, or Johto, refresh generated host hardware documentation:
 ```sh
 nix run github:alyraffauf/infra#generate-host-readmes
 ```
+
+The generator reads NixOS hardware from `facter.json` and Darwin hardware
+from `system-profiler.json` in each host directory. To capture a Mac's
+hardware over SSH and regenerate its README, run this from its configuration
+repository:
+
+```sh
+nix run github:alyraffauf/infra#generate-host-readmes -- --capture-darwin verdanturf
+```
+
+The capture connects to `<host>.local` and excludes serial numbers, UUIDs,
+and mounted-volume details. Later runs regenerate the READMEs from the
+saved reports without connecting to the hosts.

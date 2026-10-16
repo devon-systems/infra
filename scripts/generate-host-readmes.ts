@@ -5,9 +5,11 @@ import { join } from "node:path";
 const BYTES_PER_GIBIBYTE = 1024 ** 3;
 const KIBIBYTES_PER_GIBIBYTE = 1024 ** 2;
 const FACTER_HOSTS_DIRECTORY = "nix/hosts/nixos";
+const DARWIN_HOSTS_DIRECTORY = "nix/hosts/darwin";
 const GENERATED_SECTION_START = "<!-- BEGIN GENERATED HOST SPECS -->";
 const GENERATED_SECTION_END = "<!-- END GENERATED HOST SPECS -->";
 const GIT_COMMAND = "git";
+const SSH_COMMAND = "ssh";
 const DEFAULT_HOST_EMOJI = "🖥️";
 const HOST_EMOJIS: Record<string, string> = {
   canalave: "⚓",
@@ -20,6 +22,7 @@ const HOST_EMOJIS: Record<string, string> = {
   rustboro: "🪨",
   sootopolis: "🌊",
   sunnyshore: "☀️",
+  verdanturf: "🌿",
 };
 
 type Specification = readonly [component: string, details: string];
@@ -46,6 +49,130 @@ interface FacterReport {
     chassis?: Array<{ chassis_type?: { name?: string } }>;
     memory_device?: Array<{ size?: number }>;
     system?: { manufacturer?: string; product?: string; version?: string };
+  };
+}
+
+interface DarwinReport {
+  SPHardwareDataType?: Array<{
+    machine_name?: string;
+    machine_model?: string;
+    chip_type?: string;
+    cpu_type?: string;
+    number_processors?: string | number;
+    physical_memory?: string;
+    boot_rom_version?: string;
+  }>;
+  SPDisplaysDataType?: Array<{
+    sppci_model?: string;
+    sppci_cores?: string;
+    spdisplays_ndrvs?: Array<{
+      _name?: string;
+      spdisplays_pixelresolution?: string;
+    }>;
+  }>;
+  SPNVMeDataType?: Array<{
+    _items?: Array<{ device_model?: string; size_in_bytes?: number }>;
+  }>;
+}
+
+interface HostSpecifications {
+  platform: "NixOS" | "nix-darwin";
+  model: string;
+  rows: Specification[];
+}
+
+export function sanitizeDarwinReport(report: DarwinReport): DarwinReport {
+  // Keep hardware descriptions without serial numbers, UUIDs, or volume state.
+  return {
+    SPHardwareDataType: (report.SPHardwareDataType ?? []).map((hardware) => ({
+      machine_name: hardware.machine_name,
+      machine_model: hardware.machine_model,
+      chip_type: hardware.chip_type,
+      cpu_type: hardware.cpu_type,
+      number_processors: hardware.number_processors,
+      physical_memory: hardware.physical_memory,
+      boot_rom_version: hardware.boot_rom_version,
+    })),
+    SPDisplaysDataType: (report.SPDisplaysDataType ?? []).map((graphics) => ({
+      sppci_model: graphics.sppci_model,
+      sppci_cores: graphics.sppci_cores,
+      spdisplays_ndrvs: (graphics.spdisplays_ndrvs ?? []).map((display) => ({
+        _name: display._name,
+        spdisplays_pixelresolution: display.spdisplays_pixelresolution,
+      })),
+    })),
+    SPNVMeDataType: (report.SPNVMeDataType ?? []).map((controller) => ({
+      _items: (controller._items ?? []).map((disk) => ({
+        device_model: disk.device_model,
+        size_in_bytes: disk.size_in_bytes,
+      })),
+    })),
+  };
+}
+
+export function darwinSpecificationsFor(
+  report: DarwinReport,
+): HostSpecifications {
+  const hardware = report.SPHardwareDataType?.[0];
+  const model = joinDetails([hardware?.machine_name, hardware?.machine_model]);
+  const coreCount =
+    typeof hardware?.number_processors === "string"
+      ? hardware.number_processors.match(/^proc (\d+):/)?.[1]
+      : undefined;
+  const storage = (report.SPNVMeDataType ?? []).flatMap((controller) =>
+    (controller._items ?? []).map((disk) =>
+      [
+        disk.device_model,
+        disk.size_in_bytes === undefined
+          ? undefined
+          : `${Math.floor(disk.size_in_bytes / BYTES_PER_GIBIBYTE)} GiB`,
+      ]
+        .filter(isMeaningfulString)
+        .join(" — "),
+    ),
+  );
+  const graphics = (report.SPDisplaysDataType ?? []).map((card) =>
+    [card.sppci_model, card.sppci_cores && `${card.sppci_cores} cores`]
+      .filter(isMeaningfulString)
+      .join(" — "),
+  );
+  const displays = (report.SPDisplaysDataType ?? []).flatMap((card) =>
+    (card.spdisplays_ndrvs ?? []).map((display) =>
+      [
+        display._name,
+        display.spdisplays_pixelresolution?.replace(
+          /^spdisplays_(\d+)x(\d+)(Retina)?$/,
+          (_, width, height, retina) =>
+            `${width} × ${height}${retina ? " Retina" : ""}`,
+        ),
+      ]
+        .filter(isMeaningfulString)
+        .join(" — "),
+    ),
+  );
+
+  const rows: Specification[] = [
+    ["Platform", "nix-darwin"],
+    ["Model", model],
+    [
+      "CPU",
+      [
+        hardware?.chip_type ?? hardware?.cpu_type,
+        coreCount && `${coreCount} cores`,
+      ]
+        .filter(isMeaningfulString)
+        .join(" — "),
+    ],
+    ["Memory", hardware?.physical_memory ?? ""],
+    ["Storage", uniqueDetails(storage)],
+    ["Graphics", uniqueDetails(graphics)],
+    ["Display", uniqueDetails(displays)],
+    ["Firmware", hardware?.boot_rom_version ?? ""],
+  ];
+  return {
+    platform: "nix-darwin",
+    model,
+    rows: rows.filter(([, details]) => details !== ""),
   };
 }
 
@@ -183,15 +310,15 @@ function renderTable(specifications: Specification[]): string {
 function renderGeneratedSection(
   hostName: string,
   repositoryName: string,
-  report: FacterReport,
+  specifications: HostSpecifications,
 ): string {
   const emoji = HOST_EMOJIS[hostName.toLowerCase()] ?? DEFAULT_HOST_EMOJI;
-  const model = describeModel(report);
+  const { model, platform } = specifications;
   const overview =
     model === ""
-      ? `NixOS host managed by ${repositoryName}.`
-      : `${model} running NixOS.`;
-  const table = renderTable(specificationsFor(report));
+      ? `${platform} host managed by ${repositoryName}.`
+      : `${model} running ${platform}.`;
+  const table = renderTable(specifications.rows);
 
   return [
     GENERATED_SECTION_START,
@@ -244,39 +371,43 @@ function manualReadmeContent(existingReadme: string): string {
   return existingReadme.trimStart();
 }
 
-async function hasFacterReport(hostDirectory: string): Promise<boolean> {
+async function hasReport(
+  hostDirectory: string,
+  fileName: string,
+): Promise<boolean> {
   try {
-    await access(join(hostDirectory, "facter.json"));
+    await access(join(hostDirectory, fileName));
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
   }
 }
 
-async function facterHostNames(): Promise<string[]> {
+async function hostNames(hostsDirectory: string): Promise<string[]> {
   try {
-    await access(FACTER_HOSTS_DIRECTORY);
-  } catch {
-    throw new Error("The current repository does not contain nix/hosts/nixos.");
+    return (await readdir(hostsDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
   }
-
-  return readdir(FACTER_HOSTS_DIRECTORY);
 }
 
 async function generateHostReadme(
   hostDirectory: string,
   hostName: string,
   repositoryName: string,
+  specifications: HostSpecifications,
 ): Promise<void> {
-  const facterPath = join(hostDirectory, "facter.json");
-  const report = JSON.parse(await readFile(facterPath, "utf8")) as FacterReport;
   const readmePath = join(hostDirectory, "README.md");
   const existingReadme = await readFile(readmePath, "utf8").catch(() => "");
   const manualContent = manualReadmeContent(existingReadme);
   const generatedSection = renderGeneratedSection(
     hostTitle(hostName),
     repositoryName,
-    report,
+    specifications,
   );
   const nextReadme = [generatedSection, manualContent]
     .filter((content) => content !== "")
@@ -287,17 +418,88 @@ async function generateHostReadme(
   }
 }
 
+async function captureDarwinHardware(hostName: string): Promise<void> {
+  const hostDirectory = join(DARWIN_HOSTS_DIRECTORY, hostName);
+  await access(join(hostDirectory, "default.nix"));
+  const report = JSON.parse(
+    execFileSync(
+      SSH_COMMAND,
+      [
+        "-o",
+        "BatchMode=yes",
+        `${hostName}.local`,
+        "/usr/sbin/system_profiler",
+        "-json",
+        "SPHardwareDataType",
+        "SPDisplaysDataType",
+        "SPNVMeDataType",
+      ],
+      { encoding: "utf8" },
+    ),
+  ) as DarwinReport;
+  if ((report.SPHardwareDataType ?? []).length === 0) {
+    throw new Error(`No hardware information returned by ${hostName}.`);
+  }
+  await writeFile(
+    join(hostDirectory, "system-profiler.json"),
+    JSON.stringify(sanitizeDarwinReport(report), null, 2) + "\n",
+  );
+}
+
 async function main(): Promise<void> {
   process.chdir(repositoryRoot());
   const repositoryName = repositoryTitle();
 
-  const hostNames = await facterHostNames();
-  for (const hostName of hostNames.sort()) {
+  const args = process.argv.slice(2);
+  if (args.length !== 0) {
+    const hostName = args[1];
+    if (
+      args.length !== 2 ||
+      args[0] !== "--capture-darwin" ||
+      hostName === undefined ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(hostName)
+    ) {
+      throw new Error("Usage: generate-host-readmes [--capture-darwin HOST]");
+    }
+    await captureDarwinHardware(hostName);
+  }
+
+  const nixosHosts = await hostNames(FACTER_HOSTS_DIRECTORY);
+  const darwinHosts = await hostNames(DARWIN_HOSTS_DIRECTORY);
+  if (nixosHosts.length === 0 && darwinHosts.length === 0) {
+    throw new Error(
+      "The current repository does not contain NixOS or Darwin hosts.",
+    );
+  }
+  for (const hostName of nixosHosts.sort()) {
     const hostDirectory = join(FACTER_HOSTS_DIRECTORY, hostName);
-    if (await hasFacterReport(hostDirectory)) {
-      await generateHostReadme(hostDirectory, hostName, repositoryName);
+    if (await hasReport(hostDirectory, "facter.json")) {
+      const report = JSON.parse(
+        await readFile(join(hostDirectory, "facter.json"), "utf8"),
+      ) as FacterReport;
+      await generateHostReadme(hostDirectory, hostName, repositoryName, {
+        platform: "NixOS",
+        model: describeModel(report),
+        rows: specificationsFor(report),
+      });
+    }
+  }
+  for (const hostName of darwinHosts.sort()) {
+    const hostDirectory = join(DARWIN_HOSTS_DIRECTORY, hostName);
+    if (await hasReport(hostDirectory, "system-profiler.json")) {
+      const report = JSON.parse(
+        await readFile(join(hostDirectory, "system-profiler.json"), "utf8"),
+      ) as DarwinReport;
+      await generateHostReadme(
+        hostDirectory,
+        hostName,
+        repositoryName,
+        darwinSpecificationsFor(report),
+      );
     }
   }
 }
 
-await main();
+if (import.meta.main) {
+  await main();
+}
