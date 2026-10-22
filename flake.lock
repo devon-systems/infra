@@ -13,11 +13,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786887547,
-        "narHash": "sha256-tmzIIpngGiB9BWEp6Eyh09AemjMLIxMVwy5l4xuh0Q8=",
+        "lastModified": 1792609264,
+        "narHash": "sha256-yYiZfO+4niuMYmQYJiWlOaMh8wYUk/AM0mOXgCRCPes=",
         "owner": "alyraffauf",
         "repo": "blzrd",
-        "rev": "e752854621560225e7dba8b20d7066c059a62034",
+        "rev": "e829c0536c148d2f9d336d4a7c7832a645d645d8",
         "type": "github"
       },
       "original": {
