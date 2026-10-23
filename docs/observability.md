@@ -13,6 +13,11 @@ Each storage host runs Prometheus and Loki as NixOS services. Both retain
 30 days of data, with no disk-size cap. Grafana queries these stores directly;
 it does not hold a combined copy.
 
+NixOS journals retain up to 30 days within a 2 GiB cap and reserve 1 GiB of free
+space. Alloy can read back 30 days of journals. Each storage host backs up
+Prometheus and Loki to B2 daily, retaining 7 daily, 4 weekly, and 12 monthly
+snapshots. Johto and Sinnoh collect pod logs from every namespace.
+
 ## Check recent data
 
 Set the time range to the last 15 minutes. In the cluster's Prometheus data
