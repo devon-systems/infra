@@ -86,4 +86,4 @@ check Canalave's data-source connection and its Tailscale route to the host.
 For collector inputs and service settings, use the cluster configuration:
 [Hoenn](https://github.com/devon-systems/hoenn/tree/master/nix/modules/observability),
 [Johto](https://github.com/devon-systems/johto/tree/master/nix/hosts/nixos/olivine/observability),
-and [Sinnoh](https://github.com/devon-systems/sinnoh/tree/master/nix/hosts/nixos/canalave/grafana).
+and [Sinnoh](https://github.com/devon-systems/sinnoh/tree/master/nix/hosts/nixos/canalave/observability).
