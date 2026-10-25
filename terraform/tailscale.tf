@@ -51,6 +51,8 @@ resource "tailscale_acl" "tailnet" {
         "tag:k8s":            ["autogroup:admin"],
         "tag:hoenn-operator": ["autogroup:admin"],
         "tag:hoenn-service":  ["tag:hoenn-operator"],
+        "tag:kanto-operator": ["autogroup:admin"],
+        "tag:kanto-service":  ["tag:kanto-operator"],
         "tag:hermes":         ["autogroup:admin"],
         "tag:safari-ingress": ["autogroup:admin"],
         "tag:safari-service": ["autogroup:admin"],
