@@ -1,6 +1,6 @@
 # infra
 
-Shared OpenTofu configuration, maintenance tools, and operations guides for my
+Shared OpenTofu configuration and operations guides for my
 infrastructure. Infra manages Backblaze B2 buckets and the Tailscale ACL.
 
 ## Repository scope
@@ -24,8 +24,7 @@ terraform/            OpenTofu configuration for B2 and Tailscale
 secrets/              SOPS-encrypted provider credentials
 keys/                 Public SOPS recipients
 docs/                 Installation, recovery, and operations guides
-scripts/              Shared maintenance tools
-nix/                  Development tools and packaged scripts
+nix/                  Development tools
 ```
 
 The [documentation index](docs/) includes host installation, k3s recovery,
@@ -37,14 +36,14 @@ Run the generator from a host configuration repository after changing its
 hardware report:
 
 ```sh
-nix run github:devon-systems/infra#generate-host-readmes
+nix run github:devon-systems/dvnpkgs#generate-host-readmes
 ```
 
-The generator reads `facter.json` for NixOS and `system-profiler.json` for
+The generator is packaged in dvnpkgs. It reads `facter.json` for NixOS and `system-profiler.json` for
 nix-darwin. To capture a Mac's hardware over SSH and regenerate its README:
 
 ```sh
-nix run github:devon-systems/infra#generate-host-readmes -- --capture-darwin verdanturf
+nix run github:devon-systems/dvnpkgs#generate-host-readmes -- --capture-darwin verdanturf
 ```
 
 The capture connects to `<host>.local` and excludes serial numbers, UUIDs, and
@@ -78,8 +77,8 @@ credential rotation, and state recovery.
 Edit encrypted provider credentials with SOPS:
 
 ```sh
-just sops-edit b2
-just sops-edit tailscale-api
+just sops-edit b2.yaml
+just sops-edit tailscale-api.yaml
 ```
 
 Every public key in `keys/` can decrypt every file in `secrets/`. After changing
