@@ -1,6 +1,6 @@
 # Install a NixOS host
 
-Install or replace a NixOS host with `disko.nix` and `facter.nix` under `nix/hosts/nixos/<host>/`. Run every command from the host repository. This guide covers Hoenn, Johto, and Sinnoh.
+Install or replace a NixOS host with `disko.nix` and `facter.nix` under `nix/hosts/nixos/<host>/`. Run every command from the host repository. This guide covers Hoenn, Johto, Sinnoh, and Kanto.
 
 `nixos-anywhere` runs Disko and erases every disk in the host's `disko.nix`. Check the target disk before you install.
 
@@ -67,19 +67,26 @@ install -m 644 \
 
 ## Rekey the secrets
 
-If `keys/` already contains the host key, skip this section. Otherwise, rekey every SOPS file.
+After adding or replacing the public key in `keys/`, rekey the host and Kubernetes secrets. The public key file's existence does not mean the secrets include its recipient. Running this command with an unchanged key is safe.
 
 ```sh
 just sops-rekey
 ```
 
-Confirm that the new key decrypts every host secret without printing a value.
+Confirm that the staged key decrypts every host secret without printing a value. The empty environment and temporary home exclude your usual decryption keys.
 
 ```sh
-for secret_file in secrets/*.yaml; do
-	SOPS_AGE_SSH_PRIVATE_KEY_FILE="$PWD/$bootstrap_dir/etc/ssh/ssh_host_ed25519_key" \
-		sops decrypt --output /dev/null "$secret_file"
-done
+(
+	set -eu
+	verification_dir=$(mktemp -d)
+	trap 'rm -rf "$verification_dir"' EXIT
+	ssh-to-age -private-key -i "$bootstrap_dir/etc/ssh/ssh_host_ed25519_key" > "$verification_dir/key.txt"
+	for secret_file in secrets/*.yaml; do
+		env -i PATH="$PATH" HOME="$verification_dir" \
+			SOPS_AGE_KEY_FILE="$verification_dir/key.txt" \
+			sops decrypt --output /dev/null "$secret_file"
+	done
+)
 ```
 
 Review the new public key, the changed SOPS recipients, and each re-encrypted file.
@@ -88,7 +95,8 @@ Review the new public key, the changed SOPS recipients, and each re-encrypted fi
 git diff -- \
 	"keys/root_${host_name}.pub" \
 	.sops.yaml \
-	secrets
+	secrets \
+	k8s/secrets
 ```
 
 ## Validate the configuration
@@ -141,7 +149,7 @@ If the fingerprints differ, do not accept the new key.
 Refresh the generated host README. Review the facter report and README. Then validate the detected hardware once more.
 
 ```sh
-bun scripts/generate-host-readmes.ts
+nix run github:devon-systems/dvnpkgs#generate-host-readmes
 git diff -- "$host_dir/facter.json" "$host_dir/README.md"
 
 nix fmt

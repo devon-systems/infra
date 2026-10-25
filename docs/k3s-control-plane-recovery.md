@@ -1,17 +1,19 @@
 # Restore a K3s control plane
 
-Restore the Johto or Sinnoh Kubernetes control plane after its embedded etcd datastore is lost or corrupted. This procedure restores Kubernetes objects, cluster certificates, and other etcd data from a Restic backup. It does not restore application data or persistent volumes.
+Restore a cluster's Kubernetes control plane after its embedded etcd datastore is lost or corrupted. This procedure restores Kubernetes objects, cluster certificates, and other etcd data from a Restic backup. It does not restore application data or persistent volumes.
 
-Each cluster has one K3s server and one agent. The restore resets etcd membership to the server. The agent then reconnects.
+Each cluster has one K3s server. Johto and Sinnoh also have an agent. The restore resets etcd membership to the server. Skip the agent steps for Hoenn and Kanto.
 
 | Cluster | Server     | Agent     | Restic repository                             |
 | ------- | ---------- | --------- | --------------------------------------------- |
 | Johto   | Olivine    | Goldenrod | `rclone:b2:aly-backups/johto/olivine/k3s`     |
 | Sinnoh  | Sunnyshore | Canalave  | `rclone:b2:aly-backups/sinnoh/sunnyshore/k3s` |
+| Hoenn   | Mauville   | None      | `rclone:b2:aly-backups/hoenn/mauville/k3s`    |
+| Kanto   | Vermilion  | None      | `rclone:b2:aly-backups/kanto/vermilion/k3s`   |
 
 ## Before you restore
 
-Run the server steps on the server in the table. Run the agent steps on its agent. If the server host is gone, rebuild it from its NixOS configuration first. Stop K3s as soon as the replacement starts it. Then continue with this guide.
+Run the server steps on the server in the table. For Johto and Sinnoh, run the agent steps on its agent. If the server host is gone, rebuild it from its NixOS configuration first. Stop K3s as soon as the replacement starts it. Then continue with this guide.
 
 Choose a snapshot from before the incident. The restore discards every Kubernetes API change after that snapshot.
 
@@ -39,7 +41,7 @@ On the server, stop K3s.
 sudo systemctl stop k3s
 ```
 
-Do not restart either host until the restore steps tell you to do so.
+Keep K3s stopped until the restore steps tell you to start it.
 
 ## Restore the snapshot files
 
@@ -95,7 +97,7 @@ sudo systemctl start k3s
 
 ## Confirm recovery
 
-On the server, check the restored cluster after both hosts have started.
+On the server, check the restored cluster after K3s has started on each host.
 
 ```sh
 sudo k3s kubectl get nodes -o wide
@@ -104,6 +106,6 @@ sudo k3s kubectl -n flux-system get kustomizations.kustomize.toolkit.fluxcd.io
 sudo systemctl --failed
 ```
 
-The agent must return as a `Ready` node. Flux must reconcile the `master` branch. Fix failed workloads before you restore application data.
+Each node must return as `Ready`. Flux must reconcile the `master` branch. Workloads that depend on missing application data may remain unready until you restore that data.
 
-This procedure does not restore data on either host's local disks, CloudNativePG data, or other application databases. Restore those data sets with their own procedures after the control plane is healthy. An etcd restore is not an application-data restore.
+This procedure does not restore host files, CloudNativePG data, or other application databases. Restore those data sets with their own procedures after the control plane is healthy.
