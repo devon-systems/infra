@@ -1,40 +1,92 @@
-# Shared infrastructure
+# infra
 
-`infra` is the home for the account-level configuration shared by the Pokeworld repositories, plus the runbooks that go with it. Terraform manages the Backblaze B2 buckets and the Tailscale ACL. The rest of the systems live in the repositories that deploy them.
+Shared OpenTofu configuration, maintenance tools, and operations guides for my
+infrastructure. Infra manages Backblaze B2 buckets and the Tailscale ACL.
 
-| Repository | What lives there                                        |
-| ---------- | ------------------------------------------------------- |
-| `infra`    | B2 buckets, the Tailscale ACL, and shared documentation |
-| `sinnoh`   | Production hosts and services                           |
-| `johto`    | Home-lab hosts and services                             |
-| `hoenn`    | Personal machines                                       |
+## Repository scope
 
-## What's here
+Host, Kubernetes, and application configuration lives in the repository that
+deploys it:
 
-`terraform/` contains the shared OpenTofu configuration. `secrets/` contains the encrypted credentials it needs, and `keys/` contains the SOPS recipients. The [docs](docs/) directory holds the operational guides, including host installation, K3s recovery, Secure Boot, OpenTofu, and SOPS. `scripts/` contains shared repository maintenance utilities.
+| Repository                                        | Purpose                            |
+| ------------------------------------------------- | ---------------------------------- |
+| [Sinnoh](https://github.com/devon-systems/sinnoh) | Production hosts and services      |
+| [Johto](https://github.com/devon-systems/johto)   | Homelab hosts and services         |
+| [Hoenn](https://github.com/devon-systems/hoenn)   | Personal machines and k3s services |
+| [Kanto](https://github.com/devon-systems/kanto)   | Shared inference and applications  |
 
-Use the [observability runbook](docs/observability.md) to check metrics and logs
-across Hoenn, Johto, and Sinnoh.
+Keep shared recovery and operations guides in this repository.
 
-## Working locally
+## Repository layout
 
-Run `nix develop` for the pinned tooling. Start with the relevant guide in [docs](docs/) when you need to change infrastructure or recover a system.
-
-From Hoenn, Sinnoh, or Johto, refresh generated host hardware documentation:
-
-```sh
-nix run github:alyraffauf/infra#generate-host-readmes
+```text
+terraform/            OpenTofu configuration for B2 and Tailscale
+secrets/              SOPS-encrypted provider credentials
+keys/                 Public SOPS recipients
+docs/                 Installation, recovery, and operations guides
+scripts/              Shared maintenance tools
+nix/                  Development tools and packaged scripts
 ```
 
-The generator reads NixOS hardware from `facter.json` and Darwin hardware
-from `system-profiler.json` in each host directory. To capture a Mac's
-hardware over SSH and regenerate its README, run this from its configuration
-repository:
+The [documentation index](docs/) includes host installation, k3s recovery,
+Secure Boot, OpenTofu, SOPS, and observability.
+
+## Generate host documentation
+
+Run the generator from a host configuration repository after changing its
+hardware report:
 
 ```sh
-nix run github:alyraffauf/infra#generate-host-readmes -- --capture-darwin verdanturf
+nix run github:devon-systems/infra#generate-host-readmes
 ```
 
-The capture connects to `<host>.local` and excludes serial numbers, UUIDs,
-and mounted-volume details. Later runs regenerate the READMEs from the
-saved reports without connecting to the hosts.
+The generator reads `facter.json` for NixOS and `system-profiler.json` for
+nix-darwin. To capture a Mac's hardware over SSH and regenerate its README:
+
+```sh
+nix run github:devon-systems/infra#generate-host-readmes -- --capture-darwin verdanturf
+```
+
+The capture connects to `<host>.local` and excludes serial numbers, UUIDs, and
+mounted-volume details. Later runs use the saved report without connecting to
+the host.
+
+## Development
+
+Enter the pinned development shell with `nix develop`, or run `direnv allow` to
+load the shell and encrypted provider credentials. Then run:
+
+```sh
+nix fmt
+nix flake check
+```
+
+For OpenTofu changes, run `tofu -chdir=terraform init` on a fresh checkout, then
+run:
+
+```sh
+tofu -chdir=terraform fmt -check
+tofu -chdir=terraform plan
+```
+
+Review the plan before applying. The B2 backend does not lock state, so never
+run concurrent applies. See the [OpenTofu guide](docs/opentofu.md) for changes,
+credential rotation, and state recovery.
+
+## Secrets
+
+Edit encrypted provider credentials with SOPS:
+
+```sh
+just sops-edit b2
+just sops-edit tailscale-api
+```
+
+Every public key in `keys/` can decrypt every file in `secrets/`. After changing
+recipients, run `just sops-rekey` and commit `.sops.yaml` with the updated secret
+files. See the [SOPS guide](docs/sops.md) for the full procedure.
+
+Never commit private keys, decrypted credentials, OpenTofu state, or saved
+plans.
+
+This project is available under the [MIT License](LICENSE.md).
