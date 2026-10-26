@@ -34,8 +34,8 @@ The state file is `cute.haus/terraform/terraform.tfstate` in the versioned
 
 3. Inspect the candidate state before you replace the current file. Use an
    absolute path, because `-chdir` resolves relative paths inside
-   `terraform/`. Don't use `state list -state=`: with the S3 backend it
-   ignores the file and lists the current remote state.
+   `terraform/`. `state list -state=` ignores the file with the S3 backend and lists
+   the current remote state. Use `show` instead.
 
    ```sh
    tofu -chdir=terraform show /absolute/path/to/candidate.tfstate
@@ -62,8 +62,8 @@ Apply only after the plan describes the expected remote objects.
 2. Update the encrypted credential.
 
    ```sh
-   just sops-edit b2
-   just sops-edit tailscale-api
+   just sops-edit b2.yaml
+   just sops-edit tailscale-api.yaml
    ```
 
 3. Reload the environment, then verify that OpenTofu can read the state and

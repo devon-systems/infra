@@ -10,8 +10,8 @@ Select the cluster's dashboard folder, or choose its data source in **Explore**.
 | Sinnoh  | Canalave     | Sinnoh Prometheus   | Sinnoh Loki      |
 
 Each storage host runs Prometheus and Loki as NixOS services. Both retain
-30 days of data, with no disk-size cap. Grafana queries these stores directly;
-it does not hold a combined copy.
+30 days of data, with no disk-size cap. Grafana queries these stores directly.
+It does not hold a combined copy.
 
 NixOS journals retain up to 30 days within a 2 GiB cap and reserve 1 GiB of free
 space. Alloy can read back 30 days of journals. Each storage host backs up
@@ -22,7 +22,7 @@ snapshots. All three clusters collect pod logs from every namespace.
 
 Set the time range to the last 15 minutes. In the cluster's Prometheus data
 source, query `up{job="node"}` for host collection or `up{job="comin"}` for
-deployment collection. Hoenn scrapes every minute; Johto and Sinnoh normally
+deployment collection. Hoenn scrapes every minute. Johto and Sinnoh normally
 scrape every 30 seconds.
 
 In the cluster's Loki data source, query `{job="systemd-journal"}` for Linux
@@ -31,8 +31,8 @@ journals or `{service="comin"}` for deployment logs. Filter by `host` and
 `pod`, and `container` labels.
 
 Use the cluster's reporting-health dashboard to inspect scrape failures,
-metrics delivery, dropped logs, and log heartbeats. Missing data is unknown,
-not evidence that a service is healthy.
+metrics delivery, dropped logs, and log heartbeats. Missing data does not tell you
+whether a service is healthy.
 
 Metrics use `cluster` and `instance` to identify their source. Restic completion
 metrics use the `restic_backup_*` prefix, and Kubernetes workload ownership uses

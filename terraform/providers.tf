@@ -12,11 +12,8 @@ terraform {
     }
   }
 
-  # Store state in the versioned B2 `aly-backups` bucket. `.envrc` puts the B2
-  # application key from `secrets/b2.yaml` in the AWS variables.
-  #
-  # B2's S3 API at `us-east-005` does not support conditional PUT. The backend
-  # cannot lock state, so run one apply at a time.
+  # B2 does not support conditional PUT here, so this backend cannot lock state.
+  # Run one apply at a time. `.envrc` loads the B2 key into the AWS variables.
   backend "s3" {
     bucket = "aly-backups"
     key    = "cute.haus/terraform/terraform.tfstate"
@@ -40,6 +37,5 @@ provider "b2" {
 }
 
 provider "tailscale" {
-  # `.envrc` reads `TAILSCALE_API_KEY` from
-  # `secrets/tailscale-api.yaml`.
+  # `.envrc` loads TAILSCALE_API_KEY from secrets/tailscale-api.yaml.
 }

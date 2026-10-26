@@ -1,7 +1,7 @@
 # infra
 
-Shared OpenTofu configuration and operations guides for my
-infrastructure. Infra manages Backblaze B2 buckets and the Tailscale ACL.
+Infra manages Backblaze B2 buckets and the Tailscale ACL with OpenTofu. This
+repository also holds shared installation, recovery, and operations guides.
 
 ## Repository scope
 
@@ -27,7 +27,7 @@ docs/                 Installation, recovery, and operations guides
 nix/                  Development tools
 ```
 
-The [documentation index](docs/) includes host installation, k3s recovery,
+The [guides](docs/) cover host installation, k3s recovery,
 Secure Boot, OpenTofu, SOPS, and observability.
 
 ## Generate host documentation
@@ -39,8 +39,8 @@ hardware report:
 nix run github:devon-systems/dvnpkgs#generate-host-readmes
 ```
 
-The generator is packaged in dvnpkgs. It reads `facter.json` for NixOS and `system-profiler.json` for
-nix-darwin. To capture a Mac's hardware over SSH and regenerate its README:
+The dvnpkgs generator reads `facter.json` for NixOS and
+`system-profiler.json` for nix-darwin. To capture a Mac's hardware over SSH and regenerate its README:
 
 ```sh
 nix run github:devon-systems/dvnpkgs#generate-host-readmes -- --capture-darwin verdanturf

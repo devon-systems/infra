@@ -1,20 +1,22 @@
 # Set up Secure Boot and TPM LUKS unlock
 
-Use Lanzaboote to boot a NixOS host with Secure Boot. The configuration below generates the Secure Boot keys after the first boot and prepares them for enrollment. If the host has a TPM 2.0 device, you can also enroll a LUKS keyslot that unlocks during boot.
+Use Lanzaboote to enable Secure Boot on a NixOS host. It generates the signing
+keys after the first boot and prepares them for enrollment. If the host has
+TPM 2.0, you can also enroll a LUKS keyslot for automatic unlock during boot.
 
 1. Import `self.nixosModules.lanzaboote` in Johto, Sinnoh, or Kanto. Hoenn includes Lanzaboote in `self.nixosModules.nixos`. For a standalone configuration, import `inputs.lanzaboote.nixosModules.lanzaboote` and add these settings.
 
    ```nix
    boot = {
-   loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote requires this setting to be false.
+     loader.systemd-boot.enable = lib.mkForce false;
 
-   lanzaboote = {
-   	enable = true;
-   	autoGenerateKeys.enable = true;
-   	autoEnrollKeys.enable = true;
-   	configurationLimit = 10;
-   	pkiBundle = "/var/lib/sbctl";
-   };
+     lanzaboote = {
+       enable = true;
+       autoGenerateKeys.enable = true;
+       autoEnrollKeys.enable = true;
+       configurationLimit = 10;
+       pkiBundle = "/var/lib/sbctl";
+     };
    };
    ```
 
@@ -56,6 +58,9 @@ Use Lanzaboote to boot a NixOS host with Secure Boot. The configuration below ge
 
    If a selected PCR value changes, TPM unlock fails and LUKS prompts for its recovery passphrase. Keep a recovery passphrase and test it before you rely on unattended boot.
 
-   PCR 4 measures the bootloader and the selected Lanzaboote EFI image. It ties the keyslot to a particular boot image, but the measurement changes when you install a new image. Do not add PCR 4 to a static `systemd-cryptenroll --tpm2-pcrs=` policy when boot-image updates must remain unattended. A policy that accepts several boot measurements needs managed PCR policies.
+   PCR 4 measures the bootloader and the selected Lanzaboote EFI image. Its
+   value changes when you install a new image. To keep boot-image updates
+   unattended, omit PCR 4 from a static `systemd-cryptenroll --tpm2-pcrs=`
+   policy. Accepting several boot measurements requires managed PCR policies.
 
    See the [Linux TPM PCR Registry](https://uapi-group.org/specifications/specs/linux_tpm_pcr_registry/) for PCR definitions.

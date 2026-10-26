@@ -1,6 +1,8 @@
 # Install a NixOS host
 
-Install or replace a NixOS host with `disko.nix` and `facter.nix` under `nix/hosts/nixos/<host>/`. Run every command from the host repository. This guide covers Hoenn, Johto, Sinnoh, and Kanto.
+Use this guide to install or replace a host in Hoenn, Johto, Sinnoh, or Kanto.
+The host needs `disko.nix` and `facter.nix` under `nix/hosts/nixos/<host>/`.
+Run every command from the host repository.
 
 `nixos-anywhere` runs Disko and erases every disk in the host's `disko.nix`. Check the target disk before you install.
 
@@ -67,7 +69,9 @@ install -m 644 \
 
 ## Rekey the secrets
 
-After adding or replacing the public key in `keys/`, rekey the host and Kubernetes secrets. The public key file's existence does not mean the secrets include its recipient. Running this command with an unchanged key is safe.
+After adding or replacing the public key in `keys/`, rekey the host and
+Kubernetes secrets. Adding the public key file alone does not update the
+secrets. You can also run this command with an unchanged key.
 
 ```sh
 just sops-rekey
@@ -128,7 +132,8 @@ This command formats the configured disks, installs NixOS, and restarts the targ
 
 ## Check the installed host
 
-The installer uses a temporary SSH key. Remove it. Then compare the installed host key with the public key in the repository.
+Remove the installer's temporary SSH key from `known_hosts`. Then compare the
+installed host key with the public key in the repository.
 
 ```sh
 ssh-keygen -R "$target_address"
@@ -146,7 +151,8 @@ ssh "$target_host" 'hostname; systemctl --failed'
 
 If the fingerprints differ, do not accept the new key.
 
-Refresh the generated host README. Review the facter report and README. Then validate the detected hardware once more.
+Regenerate the host README and review it with the facter report. Then check
+and build the configuration with the detected hardware.
 
 ```sh
 nix run github:devon-systems/dvnpkgs#generate-host-readmes

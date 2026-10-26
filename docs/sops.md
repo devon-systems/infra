@@ -47,8 +47,8 @@ recipient metadata in each secret.
 
 4. Review the policy and secret metadata as in the add-recipient procedure.
 
-5. Replace every credential the removed key could decrypt. Git history keeps
-   the old ciphertext, so rekeying alone does not revoke values the removed
-   key has already been able to read.
+5. Replace every credential the removed key could decrypt. Git history retains
+   ciphertext that the removed key can decrypt. Rekeying cannot revoke
+   access to those old credential values.
 
 Never add a private key to this repository.

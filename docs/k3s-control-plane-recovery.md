@@ -1,6 +1,9 @@
 # Restore a K3s control plane
 
-Restore a cluster's Kubernetes control plane after its embedded etcd datastore is lost or corrupted. This procedure restores Kubernetes objects, cluster certificates, and other etcd data from a Restic backup. It does not restore application data or persistent volumes.
+Use a Restic backup to restore the control plane after the embedded etcd
+datastore is lost or corrupted. This restores Kubernetes objects, cluster
+certificates, and other etcd data. Restore application data and persistent
+volumes separately.
 
 Each cluster has one K3s server. Johto and Sinnoh also have an agent. The restore resets etcd membership to the server. Skip the agent steps for Hoenn and Kanto.
 
@@ -13,7 +16,9 @@ Each cluster has one K3s server. Johto and Sinnoh also have an agent. The restor
 
 ## Before you restore
 
-Run the server steps on the server in the table. For Johto and Sinnoh, run the agent steps on its agent. If the server host is gone, rebuild it from its NixOS configuration first. Stop K3s as soon as the replacement starts it. Then continue with this guide.
+Run each step on the server or agent named in the table. If the server host
+is gone, rebuild it from its NixOS configuration first. Stop K3s as soon as
+the replacement starts it, then continue with this guide.
 
 Choose a snapshot from before the incident. The restore discards every Kubernetes API change after that snapshot.
 
@@ -57,7 +62,7 @@ Restore the selected Restic snapshot to the root filesystem. This command restor
 sudo restic-k3s restore <restic-snapshot-id> --target /
 ```
 
-Confirm that the K3s snapshot and the SOPS-managed token exist. Do not use a snapshot from the other cluster. Replace `<k3s-snapshot-file>` with the chosen file under `server/db/snapshots`.
+Confirm that the K3s snapshot and the SOPS-managed token exist. Do not use a snapshot from another cluster. Replace `<k3s-snapshot-file>` with the chosen file under `server/db/snapshots`.
 
 ```sh
 sudo find /var/lib/rancher/k3s/server/db/snapshots -maxdepth 1 -type f -print
@@ -106,6 +111,6 @@ sudo k3s kubectl -n flux-system get kustomizations.kustomize.toolkit.fluxcd.io
 sudo systemctl --failed
 ```
 
-Each node must return as `Ready`. Flux must reconcile the `master` branch. Workloads that depend on missing application data may remain unready until you restore that data.
+Each node must report `Ready`. Flux must reconcile the `master` branch. Workloads that depend on missing application data may remain unready until you restore that data.
 
-This procedure does not restore host files, CloudNativePG data, or other application databases. Restore those data sets with their own procedures after the control plane is healthy.
+This procedure does not restore host files, CloudNativePG data, or other application databases. Use the application restore procedures after the control plane is healthy.
