@@ -41,8 +41,14 @@ recipient metadata in each secret.
 
 2. Remove the matching public key from `keys/`.
 
-3. Run `just sops-rekey`.
+3. Run `just sops-rekey`. When a recipient disappears from a file, the recipe
+   also rotates that file's data key, so later edits stay unreadable to the
+   removed key.
 
 4. Review the policy and secret metadata as in the add-recipient procedure.
+
+5. Replace every credential the removed key could decrypt. Git history keeps
+   the old ciphertext, so rekeying alone does not revoke values the removed
+   key has already been able to read.
 
 Never add a private key to this repository.

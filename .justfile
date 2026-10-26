@@ -92,6 +92,12 @@ sops-rekey:
         file_status=$(sops filestatus "$secret_file")
         if [[ "$file_status" == *'"encrypted":true'* ]]; then
             echo "rekeying $secret_file"
+            recipients_before=$(grep -o 'recipient: age1[a-z0-9]*' "$secret_file" | sort)
             sops updatekeys -y "$secret_file"
+            recipients_after=$(grep -o 'recipient: age1[a-z0-9]*' "$secret_file" | sort)
+            if [[ -n "$(comm -23 <(printf '%s\n' "$recipients_before") <(printf '%s\n' "$recipients_after"))" ]]; then
+                echo "rotating data key for $secret_file (a recipient was removed)"
+                sops rotate -i "$secret_file"
+            fi
         fi
     done
