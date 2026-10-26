@@ -2,7 +2,7 @@
 
 Use Lanzaboote to boot a NixOS host with Secure Boot. The configuration below generates the Secure Boot keys after the first boot and prepares them for enrollment. If the host has a TPM 2.0 device, you can also enroll a LUKS keyslot that unlocks during boot.
 
-1. Add `nixos-programs-lanzaboote`, or add the following settings to the NixOS host configuration.
+1. Import `self.nixosModules.lanzaboote` in Johto, Sinnoh, or Kanto. Hoenn includes Lanzaboote in `self.nixosModules.nixos`. For a standalone configuration, import `inputs.lanzaboote.nixosModules.lanzaboote` and add these settings.
 
    ```nix
    boot = {
