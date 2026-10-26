@@ -6,7 +6,6 @@ Use Lanzaboote to boot a NixOS host with Secure Boot. The configuration below ge
 
    ```nix
    boot = {
-   initrd.systemd.enable = true; # Unlock LUKS with the TPM during boot.
    loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote requires this setting to be false.
 
    lanzaboote = {
