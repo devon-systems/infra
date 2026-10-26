@@ -11,19 +11,6 @@ resource "b2_bucket" "aly_anime" {
   }
 }
 
-resource "b2_bucket" "aly_apps" {
-  bucket_name = "aly-apps"
-  bucket_type = "allPrivate"
-  default_server_side_encryption {
-    mode      = "SSE-B2"
-    algorithm = "AES256"
-  }
-  lifecycle_rules {
-    days_from_hiding_to_deleting = 7
-    file_name_prefix             = ""
-  }
-}
-
 resource "b2_bucket" "aly_archive" {
   bucket_name = "aly-archive"
   bucket_type = "allPrivate"
@@ -63,45 +50,6 @@ resource "b2_bucket" "aly_backups" {
   }
 }
 
-resource "b2_bucket" "aly_camera" {
-  bucket_name = "aly-camera"
-  bucket_type = "allPrivate"
-  default_server_side_encryption {
-    mode      = "SSE-B2"
-    algorithm = "AES256"
-  }
-  lifecycle_rules {
-    days_from_hiding_to_deleting = 7
-    file_name_prefix             = ""
-  }
-}
-
-resource "b2_bucket" "aly_code" {
-  bucket_name = "aly-code"
-  bucket_type = "allPrivate"
-  default_server_side_encryption {
-    mode      = "SSE-B2"
-    algorithm = "AES256"
-  }
-  lifecycle_rules {
-    days_from_hiding_to_deleting = 7
-    file_name_prefix             = ""
-  }
-}
-
-resource "b2_bucket" "aly_forgejo" {
-  bucket_name = "aly-forgejo"
-  bucket_type = "allPrivate"
-  default_server_side_encryption {
-    mode      = "SSE-B2"
-    algorithm = "AES256"
-  }
-  lifecycle_rules {
-    days_from_hiding_to_deleting = 1
-    file_name_prefix             = ""
-  }
-}
-
 resource "b2_bucket" "aly_movies" {
   bucket_name = "aly-movies"
   bucket_type = "allPrivate"
@@ -124,19 +72,6 @@ resource "b2_bucket" "aly_music" {
   }
   lifecycle_rules {
     days_from_hiding_to_deleting = 3
-    file_name_prefix             = ""
-  }
-}
-
-resource "b2_bucket" "aly_outline" {
-  bucket_name = "aly-outline"
-  bucket_type = "allPrivate"
-  default_server_side_encryption {
-    mode      = "SSE-B2"
-    algorithm = "AES256"
-  }
-  lifecycle_rules {
-    days_from_hiding_to_deleting = 7
     file_name_prefix             = ""
   }
 }
