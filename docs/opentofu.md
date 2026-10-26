@@ -32,10 +32,13 @@ The state file is `cute.haus/terraform/terraform.tfstate` in the versioned
    `cute.haus/terraform/terraform.tfstate`. Download the current version and
    the version that you want to recover.
 
-3. Inspect the candidate state before you replace the current file.
+3. Inspect the candidate state before you replace the current file. Use an
+   absolute path, because `-chdir` resolves relative paths inside
+   `terraform/`. Don't use `state list -state=`: with the S3 backend it
+   ignores the file and lists the current remote state.
 
    ```sh
-   tofu -chdir=terraform state list -state=/path/to/candidate.tfstate
+   tofu -chdir=terraform show /absolute/path/to/candidate.tfstate
    ```
 
 4. Upload the verified candidate as
