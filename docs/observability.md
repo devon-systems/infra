@@ -81,8 +81,8 @@ check Canalave's data-source connection and its Tailscale route to the host.
   `/var/log`, plus a rotating heartbeat log. It does not collect macOS unified logging.
 - Sootopolis's system-manager configuration requires an existing Tailscale
   connection to Mauville. It does not manage networking or run Comin.
-- Sinnoh has Prometheus alerts delivered by email through Alertmanager. Hoenn,
-  Johto, and Kanto have no equivalent notification route configured.
+- Canalave's Alertmanager emails alerts for Sinnoh and for Kanto's backup
+  rules on Vermilion. Hoenn and Johto have no alert rules.
 
 For collector inputs and service settings, use the cluster configuration:
 [Hoenn](https://github.com/devon-systems/hoenn/tree/master/nix/modules/observability),
