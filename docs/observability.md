@@ -31,7 +31,7 @@ journals or `{service="comin"}` for deployment logs. Filter by `host` and
 `unit` to narrow the results. Pod logs also have `namespace`,
 `pod`, and `container` labels.
 
-In Hoenn, Johto, and Sinnoh, use the reporting-health dashboard to inspect scrape failures,
+In all four clusters, use the reporting-health dashboard to inspect scrape failures,
 metrics delivery, dropped logs, and log heartbeats. Missing data does not tell you
 whether a service is healthy.
 
