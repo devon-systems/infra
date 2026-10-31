@@ -115,6 +115,24 @@ nix build ".#nixosConfigurations.${host_name}.config.system.build.toplevel"
 
 Do not deploy or switch a host to test an installer change.
 
+## Require the host build for automerge
+
+Add the host to its repository's CI build workflow. Run the build successfully,
+then add its exact check name to the required status checks for `master` in
+GitHub's branch protection settings. Keep the existing required checks and
+GitHub Actions app binding.
+
+Confirm that the new check appears in the required list:
+
+```sh
+gh api "repos/devon-systems/<repo>/branches/master/protection/required_status_checks" \
+	--jq '.checks[] | {context, app_id}'
+```
+
+A workflow job alone does not block automerge. For example, Hoenn requires
+`Build lavaridge` for Lavaridge and `build-fallarbor` for the Darwin host Fallarbor.
+Use the check name reported by GitHub, including any matrix suffix.
+
 ## Install the host
 
 The command updates the `facter.json` named by `facter.nix`, copies the staged host key to `/etc/ssh`, builds NixOS, and installs it.
