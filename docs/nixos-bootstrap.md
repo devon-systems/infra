@@ -182,3 +182,54 @@ nix build ".#nixosConfigurations.${host_name}.config.system.build.toplevel"
 ```
 
 Commit the public key, `.sops.yaml`, every re-encrypted secret, the facter report, and the generated README. Leave `.bootstrap/` untracked.
+
+## Set up Tailscale on macOS
+
+For nix-darwin hosts, use these steps after activation. The NixOS installation
+commands above do not apply to macOS.
+
+Hoenn keeps network-provided DNS for public names and uses a separate
+`/etc/resolver/ts.net` resolver for Tailscale names. Keep
+`services.tailscale.overrideLocalDns = false` so public DNS works before login.
+
+Authenticate the Mac and follow the login URL:
+
+```sh
+sudo /run/current-system/sw/bin/tailscale up
+```
+
+Verify that Tailscale has an address and that public HTTPS works:
+
+```sh
+tailscale ip -4
+curl -I --connect-timeout 5 --max-time 15 https://example.com
+```
+
+Check MagicDNS with a known peer:
+
+```sh
+dscacheutil -q host -a name petalburg.narwhal-snapper.ts.net
+```
+
+### Recover DNS before login
+
+If Wi-Fi is connected but websites and Homebrew downloads stall, check the
+configured resolver and Tailscale login state:
+
+```sh
+networksetup -getdnsservers "Wi-Fi"
+tailscale ip -4
+```
+
+If DNS is `100.100.100.100` and Tailscale reports `NeedsLogin`, restore DHCP-provided
+DNS on the Mac. Replace `Wi-Fi` with the active service name for wired connections.
+Use `networksetup -listallnetworkservices` to list the names.
+
+```sh
+sudo networksetup -setdnsservers "Wi-Fi" Empty
+```
+
+Retry public HTTPS, then run `sudo tailscale up` to authenticate. Update the
+configuration to disable `overrideLocalDns` before the next activation, or it
+will replace the DNS setting again. If you temporarily set public DNS servers
+manually, the same `Empty` command restores network-provided DNS.
