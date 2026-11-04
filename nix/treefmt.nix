@@ -1,5 +1,5 @@
 _: {
-  perSystem = _: {
+  perSystem = {
     treefmt.config = {
       programs = {
         alejandra.enable = true;
