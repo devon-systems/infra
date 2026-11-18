@@ -79,8 +79,6 @@ check Canalave's data-source connection and its Tailscale route to the host.
   remote write, so they do not appear on Mauville's Prometheus targets page.
 - Verdanturf tails `system.log`, `nix-darwin-upgrade.log`, and `comin.log` under
   `/var/log`, plus a rotating heartbeat log. It does not collect macOS unified logging.
-- Sootopolis's system-manager configuration requires an existing Tailscale
-  connection to Mauville. It does not manage networking or run Comin.
 - Canalave's Alertmanager emails alerts for Sinnoh and for Kanto's backup
   rules on Vermilion. Hoenn and Johto have no alert rules.
 

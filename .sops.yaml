@@ -3,17 +3,19 @@
 # add or remove its .pub file and re-run `just sops-rekey`.
 keys:
   # === user keys (aly@<host>) ===
+  - &user_aly_lavaridge age12kxzklacs2qf2x4daevwznj36ww6j6vwnm3y3plfhkww9ftfma7s08574m
+  - &user_aly_lilycove age1tdgfvwl4qdptyvgxju3rwz9uh45hz422txzcgsrwm4f4f96x558skzxklr
   - &user_aly_mauville age1876lthmlfq2aq6nm6z2qyu0ed4aa5ss68xvnlw5cqxcdtzslaqrqzgcmlm
   - &user_aly_petalburg age162sx8kppp90mjxw88eqs78hgnpkddf8k9kgtksmmexzvcdxknpkspmkgaf
   - &user_aly_rustboro age1fczwtlqdqq7pjyzna2yl9nvmhpe68zk5k6nyn0dt4sp0lts04anskhcmu6
-  - &user_aly_sootopolis age16fm9jk3msta76lp7t0m5a5hn8l4gc752unl09azjkk33z3ghxg7sd52yrj
   # === host keys (root@<host>) ===
 
 creation_rules:
   - path_regex: ^secrets/.*\.ya?ml$
     key_groups:
       - age:
+          - *user_aly_lavaridge
+          - *user_aly_lilycove
           - *user_aly_mauville
           - *user_aly_petalburg
           - *user_aly_rustboro
-          - *user_aly_sootopolis
